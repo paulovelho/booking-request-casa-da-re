@@ -1,30 +1,81 @@
 import React, { Fragment, ReactElement, useState } from "react";
 import { 
   Button,
+  Checkbox,
   Container,
+  FormControlLabel,
   InputLabel,
   MenuItem,
   Select,
+  TextareaAutosize,
   TextField,
 } from '@material-ui/core';
+import { makeStyles } from "@material-ui/core/styles";
 import { DatePicker, MuiPickersUtilsProvider } from "@material-ui/pickers";
 import DateFnsUtils from '@date-io/date-fns';
 
+import ContactServices from '../../services/api'
+
+const useStyles = makeStyles(theme => ({
+  root: {
+    "& .MuiTextField-root": {
+      margin: theme.spacing(1),
+    },
+  },
+  error: {
+    color: "red",
+    "font-weight": "bold",
+    padding: "10px",
+  },
+  success: {
+    color: "green",
+    "font-weight": "bold",
+  },
+  textarea: {
+    resize: "both",
+    width: "100%",
+  },
+}));
 
 export default function BookingRequest(): ReactElement {
+  const classes = useStyles();
   const DateFn = new DateFnsUtils();
 
+  const [showSubmit, changeShowSubmit] = useState<boolean>(true);
+  const [showSuccess, changeShowSuccess] = useState<boolean>(false);
+  const [showError, changeShowError] = useState<boolean>(false);
+
+  const [name, changeName] = useState<string>("");
+  const [email, changeEmail] = useState<string>("");
   const [people, changePeople] = useState<string>("2");
   const [checkin, handleDateChangeCheckin] = useState<Date>(DateFn.addDays(new Date(), 180));
   const [checkout, handleDateChangeCheckout] = useState<Date>(DateFn.addDays(new Date(), 195));
-
+  const [fixedDates, changeFixedDates] = useState<boolean>(false);
+  const [comments, handleComments] = useState<string>("");
 
   const Request = (): void => {
-    console.info("sending: ", {
+    changeShowSubmit(false);
+    changeShowError(false);
+    changeShowSuccess(false);
+    const data = {
+      name: name,
+      email: email,
       people: people,
       checkin: checkin,
       checkout: checkout,
-    });
+      fixedDates: fixedDates,
+      comments: comments,
+    };
+    ContactServices.send(data)
+      .then(result => {
+        changeShowSuccess(true);
+        console.info("sent! ", result);
+      })
+      .catch(err => {
+        changeShowSubmit(true);
+        changeShowError(true);
+        console.error(err);
+      })
   }
 
   return (
@@ -33,6 +84,29 @@ export default function BookingRequest(): ReactElement {
         <div>
           <h2>Solicitar Orçamento</h2>
 
+
+          <img className="img-fluid" 
+            src={`${process.env.PUBLIC_URL}/images/re.jpg`} 
+            alt="Casa Nerd"/>
+
+          <br/><br/>
+          <TextField
+            fullWidth
+            id="name"
+            label="Nome"
+            value={name}
+            onChange={newData => newData && changeName(newData.target.value)} 
+          />
+          <br/><br/>
+          <TextField
+            fullWidth
+            id="email"
+            label="Email"
+            value={email}
+            onChange={newData => newData && changeEmail(newData.target.value)} 
+          />
+
+          <br/><br/>
           <InputLabel shrink id="people-label">Quantas Pessoas</InputLabel>
           <Select
             fullWidth
@@ -69,14 +143,48 @@ export default function BookingRequest(): ReactElement {
           />
 
           <br/><br/>
+          <FormControlLabel
+            control={<Checkbox color="primary" />}
+            label="Minhas datas já estão fechadas!"
+            labelPlacement="end"
+            onChange={event => event.target && changeFixedDates((event.target as HTMLInputElement).checked)}
+          />
+
+          <br/><br/>
+          <TextareaAutosize
+            className={classes.textarea}
+            rowsMin={3}
+            aria-label="maximum height"
+            placeholder="Algum comentário?"
+            value={comments}
+            onChange={event => event.target && handleComments(event.target.value)}
+          />
+
+          <br/><br/>
+          {
+            showError && 
+            <div className={classes.error}>
+              Ocorreu um erro ao enviar sua solicitação!
+            </div>
+          }
+          {
+            showSuccess && 
+            <div className={classes.success}>
+              Mensagem enviada com sucesso! A Rê vai entrar em contato com você!
+            </div>
+          }
           <Button 
             variant="contained"
             color="primary"
             onClick={Request}
+            disabled={!showSubmit}
             fullWidth >
             Quero ficar com a Rê!
           </Button>
 
+          <br/><br/>
+          <br/><br/>
+          <br/><br/>
         </div>
       </MuiPickersUtilsProvider>
     </Container>
