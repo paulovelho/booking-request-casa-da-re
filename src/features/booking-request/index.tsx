@@ -40,10 +40,12 @@ const useStyles = makeStyles(theme => ({
 export default function BookingRequest(): ReactElement {
   const classes = useStyles();
   const DateFn = new DateFnsUtils();
+  let origin = '';
 
   const [showSubmit, changeShowSubmit] = useState<boolean>(true);
   const [showSuccess, changeShowSuccess] = useState<boolean>(false);
   const [showError, changeShowError] = useState<boolean>(false);
+  const [errorMsg, changeErrorMsg] = useState<string>("ERRO!");
 
   const [name, changeName] = useState<string>("");
   const [email, changeEmail] = useState<string>("");
@@ -52,6 +54,24 @@ export default function BookingRequest(): ReactElement {
   const [checkout, handleDateChangeCheckout] = useState<Date>(DateFn.addDays(new Date(), 195));
   const [fixedDates, changeFixedDates] = useState<boolean>(false);
   const [comments, handleComments] = useState<string>("");
+
+  const getQueryParams = () => {
+    return window.location.search
+      .replace('?', '')
+      .split('&')
+      .map(q => {
+        const qsplit = q.split('=');
+        return {
+          key: qsplit[0],
+          data: qsplit[1],
+        }
+      })
+  };
+  const getOrigin = () => {
+    const params = getQueryParams();
+    const qOrigin = params.filter(q => q.key === "origin");
+    if (qOrigin.length > 0) origin = qOrigin[0].data;
+  }
 
   const Request = (): void => {
     changeShowSubmit(false);
@@ -65,18 +85,28 @@ export default function BookingRequest(): ReactElement {
       checkout: checkout,
       fixedDates: fixedDates,
       comments: comments,
+      origin: origin,
     };
     ContactServices.send(data)
       .then(result => {
-        changeShowSuccess(true);
         console.info("sent! ", result);
+        if (result.success) {
+          changeShowSuccess(true);
+        } else {
+          changeErrorMsg(result.message);
+          changeShowSubmit(true);
+          changeShowError(true);
+        }
       })
       .catch(err => {
+        changeErrorMsg("Ocorreu um erro ao enviar sua solicitação!");
         changeShowSubmit(true);
         changeShowError(true);
         console.error(err);
       })
   }
+
+  getOrigin();
 
   return (
     <Container maxWidth="sm">
@@ -164,7 +194,7 @@ export default function BookingRequest(): ReactElement {
           {
             showError && 
             <div className={classes.error}>
-              Ocorreu um erro ao enviar sua solicitação!
+              {errorMsg}
             </div>
           }
           {

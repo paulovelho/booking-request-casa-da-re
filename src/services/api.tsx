@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 class ContactService {
-  private api = "http://paulovelho.com/contato/api";
-  private authToken = "authtoken";
+  private api = "http://api.contato.paulovelho.com.br/emails";
+  private authToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6IjciLCJuYW1lIjoiUlx1MDBlYSIsIm1haWxfZnJvbSI6InJlQHBhdWxvdmVsaG8uY29tIn0.2oWNfs_mINb2uJlxqIvBwzGI4wAACXU07uujHBGCesI";
 
   buildMessage(data: any) {
     const dateFormat = new Intl.DateTimeFormat("pt-BR", {
@@ -10,7 +10,8 @@ class ContactService {
       month: "long",
       day: "2-digit",
     });
-    return `Novo Contato:\n
+    return `Novo Contato:\n\n
+      ${(data.origin ? 'Origem: ' + data.orign + '\n' : '')}
       Nome: ${data.name}\n
       Email: ${data.email}\n
       Data de checkin: ${dateFormat.format(data.checkin)}\n
@@ -28,7 +29,7 @@ class ContactService {
     return {
       subject: subject,
       message: message,
-      to: email,
+      from: email,
     };
   }
 
@@ -39,9 +40,10 @@ class ContactService {
     return axios.post(this.api, payload, {
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': this.authToken,
+          'Authorization': 'Bearer ' + this.authToken,
         },
-      });
+      })
+      .then(data => data.data);
   }
 }
 
