@@ -116,7 +116,7 @@ export default function BookingRequest(): ReactElement {
 
 
           <img className="img-fluid" 
-            src={`${process.env.PUBLIC_URL}/images/re.jpg`} 
+            src={`${process.env.PUBLIC_URL}/images/mm.jpeg`} 
             alt="Casa Nerd"/>
 
           <br/><br/>
